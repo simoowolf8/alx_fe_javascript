@@ -1,15 +1,23 @@
-// Charger les citations depuis le stockage local
+// Charger les citations depuis le stockage local (ajouté)
 function loadQuotesFromLocalStorage() {
     const storedQuotes = localStorage.getItem('quotes');
     return storedQuotes ? JSON.parse(storedQuotes) : [];
 }
 
-// Sauvegarder les citations dans le stockage local
+// Sauvegarder les citations dans le stockage local (ajouté)
 function saveQuotesToLocalStorage() {
     localStorage.setItem('quotes', JSON.stringify(quotes));
 }
 
-// Initialiser les citations avec celles du Local Storage
+// Initialiser les citations avec celles du Local Storage (modification)
+// Remplace cette ligne :
+// const quotes = [
+//     { text: "The only limit to our realization of tomorrow is our doubts of today.", category: "Motivation" },
+//     { text: "Life is what happens when you're busy making other plans.", category: "Life" },
+//     { text: "Get busy living or get busy dying.", category: "Life" },
+//     { text: "You have within you right now, everything you need to deal with whatever the world can throw at you.", category: "Motivation" }
+// ];
+// par cette ligne :
 let quotes = loadQuotesFromLocalStorage();
 if (quotes.length === 0) { // Si le stockage est vide, on ajoute des citations par défaut
     quotes = [
@@ -21,14 +29,14 @@ if (quotes.length === 0) { // Si le stockage est vide, on ajoute des citations p
     saveQuotesToLocalStorage(); // On enregistre les citations par défaut dans Local Storage
 }
 
-// Fonction pour afficher une citation aléatoire
+// Fonction pour afficher une citation aléatoire (modifiée pour utiliser le Session Storage)
 function showRandomQuote() {
     const randomIndex = Math.floor(Math.random() * quotes.length);
     const quote = quotes[randomIndex];
     const quoteDisplay = document.getElementById('quoteDisplay');
     quoteDisplay.innerHTML = `"${quote.text}" - ${quote.category}`;
 
-    // Sauvegarder la dernière citation vue dans le Session Storage
+    // Sauvegarder la dernière citation vue dans le Session Storage (ajouté)
     sessionStorage.setItem('lastViewedQuote', JSON.stringify(quote));
 }
 
@@ -55,7 +63,7 @@ function createAddQuoteForm() {
     form.appendChild(categoryInput);
     form.appendChild(submitButton);
 
-    // Gestionnaire d'événement pour ajouter une nouvelle citation et sauvegarder dans Local Storage
+    // Gestionnaire d'événement pour ajouter une nouvelle citation et sauvegarder dans Local Storage (modifié)
     form.addEventListener('submit', function(event) {
         event.preventDefault();
         const newQuote = {
@@ -63,7 +71,7 @@ function createAddQuoteForm() {
             category: categoryInput.value
         };
         quotes.push(newQuote);
-        saveQuotesToLocalStorage(); // Sauvegarder après ajout
+        saveQuotesToLocalStorage(); // Sauvegarder après ajout (ajouté)
         textInput.value = '';
         categoryInput.value = '';
         alert('Quote added successfully!');
@@ -72,57 +80,14 @@ function createAddQuoteForm() {
     document.body.appendChild(form);
 }
 
-// Fonction pour exporter les citations en JSON
-function exportToJsonFile() {
-    const dataStr = JSON.stringify(quotes, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-
-    // Crée un lien temporaire pour le téléchargement
-    const downloadLink = document.createElement("a");
-    downloadLink.href = url;
-    downloadLink.download = "quotes.json";
-    downloadLink.click();
-
-    // Nettoyage de l'URL
-    URL.revokeObjectURL(url);
-}
-
-// Fonction pour importer des citations depuis un fichier JSON
-function importFromJsonFile(event) {
-    const fileReader = new FileReader();
-
-    // Fonction exécutée lorsque le fichier est chargé
-    fileReader.onload = function(event) {
-        try {
-            const importedQuotes = JSON.parse(event.target.result);
-            if (Array.isArray(importedQuotes)) { // Vérifie si les données sont un tableau
-                quotes.push(...importedQuotes);
-                saveQuotesToLocalStorage(); // Sauvegarde dans Local Storage
-                alert('Quotes imported successfully!');
-                showRandomQuote(); // Met à jour l'affichage
-            } else {
-                alert("Invalid JSON format");
-            }
-        } catch (error) {
-            alert("Failed to import quotes: Invalid JSON file.");
-        }
-    };
-
-    fileReader.readAsText(event.target.files[0]);
-}
-
 // Initial setup
 document.addEventListener('DOMContentLoaded', function() {
     const showQuoteButton = document.getElementById('newQuote');
     showQuoteButton.addEventListener('click', showRandomQuote);
 
-    const exportButton = document.getElementById('exportQuotes');
-    exportButton.addEventListener('click', exportToJsonFile);
-
     createAddQuoteForm();
 
-    // Charger la dernière citation vue depuis le Session Storage
+    // Charger la dernière citation vue depuis le Session Storage (ajouté)
     const lastViewedQuote = sessionStorage.getItem('lastViewedQuote');
     if (lastViewedQuote) {
         const quoteDisplay = document.getElementById('quoteDisplay');
