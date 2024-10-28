@@ -21,15 +21,23 @@ if (quotes.length === 0) { // Si le stockage est vide, on ajoute des citations p
     saveQuotesToLocalStorage(); // On enregistre les citations par défaut dans Local Storage
 }
 
-// Fonction pour afficher une citation aléatoire
+// Fonction pour afficher une citation aléatoire en fonction de la catégorie sélectionnée
 function showRandomQuote() {
-    const randomIndex = Math.floor(Math.random() * quotes.length);
-    const quote = quotes[randomIndex];
+    const selectedCategory = document.getElementById('categoryFilter').value;
+    const filteredQuotes = selectedCategory === 'all' 
+        ? quotes 
+        : quotes.filter(quote => quote.category === selectedCategory);
+
     const quoteDisplay = document.getElementById('quoteDisplay');
-    quoteDisplay.innerHTML = `"${quote.text}" - ${quote.category}`;
+    if (filteredQuotes.length > 0) {
+        const randomQuote = filteredQuotes[Math.floor(Math.random() * filteredQuotes.length)];
+        quoteDisplay.innerHTML = `"${randomQuote.text}" - ${randomQuote.category}`;
+    } else {
+        quoteDisplay.innerHTML = 'No quotes available for this category';
+    }
 
     // Sauvegarder la dernière citation vue dans le Session Storage
-    sessionStorage.setItem('lastViewedQuote', JSON.stringify(quote));
+    sessionStorage.setItem('lastViewedQuote', JSON.stringify(filteredQuotes[0]));
 }
 
 // Fonction pour créer et ajouter un formulaire de nouvelle citation
@@ -64,6 +72,7 @@ function createAddQuoteForm() {
         };
         quotes.push(newQuote);
         saveQuotesToLocalStorage(); // Sauvegarder après ajout
+        populateCategories(); // Met à jour la liste déroulante des catégories
         textInput.value = '';
         categoryInput.value = '';
         alert('Quote added successfully!');
@@ -99,6 +108,7 @@ function importFromJsonFile(event) {
             if (Array.isArray(importedQuotes)) { // Vérifie si les données sont un tableau
                 quotes.push(...importedQuotes);
                 saveQuotesToLocalStorage(); // Sauvegarde dans Local Storage
+                populateCategories(); // Met à jour la liste des catégories
                 alert('Quotes imported successfully!');
                 showRandomQuote(); // Met à jour l'affichage
             } else {
@@ -112,7 +122,50 @@ function importFromJsonFile(event) {
     fileReader.readAsText(event.target.files[0]);
 }
 
-// Initial setup
+// Fonction pour remplir le menu déroulant des catégories
+function populateCategories() {
+    const categoryFilter = document.getElementById('categoryFilter');
+    const categories = [...new Set(quotes.map(quote => quote.category))]; // Extrait les catégories uniques
+
+    categoryFilter.innerHTML = '<option value="all">All Categories</option>'; // Réinitialise le menu
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        categoryFilter.appendChild(option);
+    });
+
+    // Récupère le dernier filtre sélectionné de Local Storage
+    const lastSelectedCategory = localStorage.getItem('lastSelectedCategory');
+    if (lastSelectedCategory) {
+        categoryFilter.value = lastSelectedCategory; // Sélectionne la dernière catégorie utilisée
+        filterQuotes(); // Filtre immédiatement les citations
+    }
+}
+
+// Fonction pour filtrer les citations en fonction de la catégorie sélectionnée
+function filterQuotes() {
+    const selectedCategory = document.getElementById('categoryFilter').value;
+    const quoteDisplay = document.getElementById('quoteDisplay');
+    quoteDisplay.innerHTML = ''; // Efface l'affichage précédent
+
+    // Filtre les citations en fonction de la catégorie sélectionnée
+    const filteredQuotes = selectedCategory === 'all' 
+        ? quotes 
+        : quotes.filter(quote => quote.category === selectedCategory);
+
+    if (filteredQuotes.length > 0) {
+        const randomQuote = filteredQuotes[Math.floor(Math.random() * filteredQuotes.length)];
+        quoteDisplay.innerHTML = `"${randomQuote.text}" - ${randomQuote.category}`;
+    } else {
+        quoteDisplay.innerHTML = 'No quotes available for this category';
+    }
+
+    // Sauvegarde la catégorie sélectionnée dans Local Storage
+    localStorage.setItem('lastSelectedCategory', selectedCategory);
+}
+
+// Initialisation au chargement de la page
 document.addEventListener('DOMContentLoaded', function() {
     const showQuoteButton = document.getElementById('newQuote');
     showQuoteButton.addEventListener('click', showRandomQuote);
@@ -121,6 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
     exportButton.addEventListener('click', exportToJsonFile);
 
     createAddQuoteForm();
+    populateCategories(); // Initialise le menu des catégories
 
     // Charger la dernière citation vue depuis le Session Storage
     const lastViewedQuote = sessionStorage.getItem('lastViewedQuote');
